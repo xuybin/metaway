@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "~/": "./",
+    "std/": "https://deno.land/std@0.159.0/",
+    "ajv": "https://esm.sh/v95/ajv@8.11.0",
+    "ejs":"https://esm.sh/v95/ejs@3.1.8"
+  }
+}

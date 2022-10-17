@@ -1,0 +1,15 @@
+{
+  "tasks": {
+    "init": "deno run -A  --unstable ./spec/init.ts  --template=alephjs  ./gen/alephjs/schema.json",
+    "export": "deno run -A  --unstable ./spec/init.ts  --template=alephjs --export ./gen/alephjs/schema.json"
+  },
+  "importMap": "./import_map.json",
+  "fmt": {
+    "files": {
+      "include": ["spec/"]
+    },
+    "options": {
+      "lineWidth": 160
+    }
+  }
+}

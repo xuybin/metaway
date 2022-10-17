@@ -1,8 +1,4 @@
-import Ajv, {
-  AsyncValidateFunction,
-  FuncKeywordDefinition,
-  JSONSchemaType,
-} from "https://esm.sh/v95/ajv@8.11.0";
+import Ajv, { AsyncValidateFunction, FuncKeywordDefinition, JSONSchemaType } from "https://esm.sh/v95/ajv@8.11.0";
 import { parse } from "https://deno.land/std@0.155.0/flags/mod.ts";
 
 // 输出默认配置JSON --export  **/*.json
@@ -11,7 +7,6 @@ import { parse } from "https://deno.land/std@0.155.0/flags/mod.ts";
 // 参数冒泡到上层作为选项,目录以当前 模板 相对目录 为准
 export interface Data {
   export?: boolean;
-  import?: string;
   template: string;
   _: string[];
 }
@@ -58,7 +53,7 @@ const existsTemplate: FuncKeywordDefinition = {
   type: "string",
   validate: async (_schema: any, data: string) => {
     try {
-      const templateInit = import.meta.resolve(`./${data}/init.ts`);
+      const templateInit = import.meta.resolve(`./${data}/mod.ts`);
       const { status } = await fetch(templateInit);
       return status == 200;
     } catch (_err) {
@@ -94,14 +89,14 @@ export const schema: JSONSchemaType<Data> & { "$id": string; $async: true } = {
           maxItems: 1,
           items: {
             type: "string",
-            pattern: '^(?:./|../)+(?:[^\\\\/:*?"<>| ]+)$',
+            pattern: '^(?:\\./|\\.\\./)+(?:[A-Za-z0-9_.-]+/)*(?:[^\\\\/:*?"<>| ]+)$',
             existsFile: false,
           },
         },
       },
     },
     {
-      required: ["template", "import", "_"],
+      required: ["template", "_"],
       additionalProperties: false,
       properties: {
         export: {
@@ -111,18 +106,14 @@ export const schema: JSONSchemaType<Data> & { "$id": string; $async: true } = {
           type: "string",
           existsTemplate,
         },
-        import: {
-          type: "string",
-          existsFile: true,
-        },
         _: {
           type: "array",
           minItems: 1,
           maxItems: 1,
           items: {
             type: "string",
-            pattern: '^(?:./|../)+(?:[^\\\\/:*?"<>| ]+)$',
-            existsDir: false,
+            pattern: '^(?:\\./|\\.\\./)+(?:[A-Za-z0-9_.-]+/)*(?:[^\\\\/:*?"<>| ]+)$',
+            existsFile: true,
           },
         },
       },
@@ -152,24 +143,20 @@ if (import.meta.main) {
     | undefined) || ajv.compile(schema) as AsyncValidateFunction<Data>;
   try {
     const data = await validate(flags);
+    const { exportSchemaDefault, init } = await import(
+      import.meta.resolve(`./${data.template}/mod.ts`)
+    ) as {
+      exportSchemaDefault: (ajv: Ajv, path: string) => Promise<boolean>;
+      init: (ajv: Ajv, profilesPath: string) => Promise<boolean>;
+    };
     if (data.export) {
-      const { exportSchemaDefault } = await import(
-        import.meta.resolve(`./${data.template}/init.ts`)
-      ) as {
-        exportSchemaDefault: (ajv: Ajv, path: string) => Promise<void>;
-      };
-      await exportSchemaDefault(ajv, data._[0]);
-      console.log(
-        `export "${data.template}" template default profiles into "${
-          data._[0]
-        }".`,
-      );
-    } else if (data.template) {
-      console.log(
-        `project initialized into "${
-          data._[0]
-        }" folder with "${data.template}" template and "${data.import}" profiles.`,
-      );
+      if (await exportSchemaDefault(ajv, data._[0])) {
+        console.log(`export "${data.template}" template default profiles into "${data._[0]}".`);
+      }
+    } else {
+      if (await init(ajv, data._[0])) {
+        console.log(`project initialized with "${data.template}" template and "${data._[0]}" profiles.`);
+      }
     }
   } catch (err) {
     if (err instanceof Ajv.ValidationError) {
@@ -177,24 +164,16 @@ if (import.meta.main) {
       let message = "";
       for (const iterator of err.errors) {
         if (iterator.instancePath && iterator.instancePath != "/export") {
-          message = `"${
-            iterator.instancePath?.replace("/", "")
-          }" ${iterator.message}`;
+          message = `"${iterator.instancePath?.replace("/", "")}" ${iterator.message}`;
           break;
         }
       }
       if (message == "") {
-        console.log(
-          `export profiles example: --template=alephjs --export ./alephjs.default.json`,
-        );
-        console.log(
-          `project initialize example: --template=alephjs --import=./alephjs.default.json ./projectFolder\n`,
-        );
+        console.log(`export  profiles   example: --template=alephjs --export ./alephjsProject/metaway.json`);
+        console.log(`project initialize example: --template=alephjs ./alephjsProject/metaway.json\n`);
         for (const iterator of err.errors) {
           if (iterator.instancePath != "/export") {
-            message = `"${
-              iterator.instancePath?.replace("/", "")
-            }" ${iterator.message}`;
+            message = `"${iterator.instancePath?.replace("/", "")}" ${iterator.message}`;
             break;
           }
         }
