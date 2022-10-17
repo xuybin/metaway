@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 import Ajv, { AsyncValidateFunction, FuncKeywordDefinition, JSONSchemaType } from "https://esm.sh/v95/ajv@8.11.0";
 import { parse } from "https://deno.land/std@0.155.0/flags/mod.ts";
 

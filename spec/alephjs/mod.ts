@@ -166,7 +166,7 @@ export async function init(ajv: Ajv, profilesPath: string) {
         await copyDir(tempDir, fullProjectDir, profiles.fileMerge == "replace");
       }
       try {
-        await Deno.remove(tempDir,{recursive:true});
+        await Deno.remove(tempDir, { recursive: true });
       } catch (error) {
         if (!(error instanceof Deno.errors.NotFound)) {
           throw error;

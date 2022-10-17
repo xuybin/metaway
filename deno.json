@@ -4,6 +4,11 @@
     "export": "deno run -A  --unstable ./spec/init.ts  --template=alephjs --export ./gen/alephjs/schema.json"
   },
   "importMap": "./import_map.json",
+  "lint": {
+    "files": {
+      "include": ["spec/"]
+    }
+  },
   "fmt": {
     "files": {
       "include": ["spec/"]
